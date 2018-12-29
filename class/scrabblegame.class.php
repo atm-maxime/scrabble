@@ -1,27 +1,27 @@
 <?php
 
+include_once 'class/scrabblebag.class.php';
+include_once 'class/scrabbleboard.class.php';
+
 class ScrabbleGame
 {
-    // Game lang
-    public $lang;
-    
-    // Game board
-    public $board;
-    
-    // Game dictionnary
+    // Game lang, used to load setup and dictionnary
+    private $lang;
+    // Game dictionnary, using PHP pspell library
     private $dict;
     
-    // Letter values
-    private $LetterValues;
+    // Letters distribution, array containing the number of occurrence of each letter
+    private $bag;
+    // Board game
+    private $board;
     
-    // Letter number
-    private $LetterPool;
-    
-    // Number of letters for a draw
-    private $NumberLetterDraw;
+    // Number of letters for a draw, usually 7
+    private $numberLetterDraw;
     
     // Current draw
     public $currentDraw;
+    // Current words possible with current draw
+    public $currentWords;
     
     /**
      * Load the game setup according to the lang, initialize the dictionnary and the board
@@ -30,21 +30,16 @@ class ScrabbleGame
      */
     public function __construct($lang) {
         $this->lang = $lang;
-        $this->NumberLetterDraw = 7;
+        $this->numberLetterDraw = 7;
         
         // Load dictionnary
         $this->dict = pspell_new($lang);
         
-        // Load conf from file containing for each letter the value and number
-        $conf = file('conf/'.$lang.'.conf');
-        foreach ($conf as $line) {
-            $data = explode(',', $line);
-            $this->LetterValues[$data[0]] = (int)$data[1];
-            $this->LetterPool[$data[0]] = (int)$data[2];
-        }
+        // Load scrabble bag
+        $this->bag = new ScrabbleBag($lang);
         
         // Load board
-        // @TODO dev
+        $this->board = new ScrabbleBoard($lang);
     }
     
     /**
@@ -55,57 +50,30 @@ class ScrabbleGame
     public function newTurn($rest='') {
         // Draw new letters
         $this->draw($rest);
-        echo '<hr>DRAW : '.$this->currentDraw;
         
-        $words = $this->getAllCorrectWords();
-        echo ' => POSSIBLE WORDS : '.count($words);
-        echo '<hr>';
+        // Get all words possible
+        $this->getAllCorrectWords();
         
-        foreach ($words as $word) {
-            echo '<br> - '.$word.' : '.$this->getWordValue($word).' points';
-            if(strlen($word) == 7) echo ' => SCRABBLE !!';
-        }
+        // @TODO continue...
     }
     
     /**
      * Draw letters from the remaining pool
      * 
-     * @param string $rest : Remaining letters from previous turn
+     * @param Array $rest : Remaining letters from previous turn
      */
-    public function draw($rest='') {
+    public function draw($rest=array()) {
         $this->currentDraw = $rest;
         
-        // Get all remaining letters
-        $pool = $this->getLetterPool();
-        
-        while(strlen($this->currentDraw) < $this->NumberLetterDraw && !empty($pool)) {
+        while(count($this->currentDraw) < $this->numberLetterDraw && !$this->bag->isEmpty()) {
             // Pick a random letter from the pool
-            $letter = $pool[rand(0,count($pool)-1)];
-            // Letter is no longer available in the pool
-            $this->LetterPool[$letter]--;
+            $tile = $this->bag->drawLetter();
             // Add letter to the current draw
-            $this->currentDraw.= $letter;
-            // Get all remaining letters again
-            $pool = $this->getLetterPool();
+            $this->currentDraw[$tile->getTileLetter()] = $tile;
         }
     }
     
-    /**
-     * Generate an array containing all remaining letters from the pool
-     * 
-     * @return Array : All remaining letters
-     */
-    private function getLetterPool() {
-        $remainingLetters = array();
-        
-        foreach($this->LetterPool as $letter => $nb) {
-            for ($i = 0; $i < $nb; $i++) {
-                $remainingLetters[] = $letter;
-            }
-        }
-        
-        return $remainingLetters;
-    }
+    
     
     /**
      * Get all correct words from the current letter draw
@@ -114,17 +82,15 @@ class ScrabbleGame
      */
     public function getAllCorrectWords() {
         $letterCombinations = array();
-        $letters = str_split($this->currentDraw);
+        $letters = array_keys($this->currentDraw);
         $this->getAllLetterCombinations($letters, $letterCombinations);
         $letterCombinations = array_unique($letterCombinations);
         
-        $words = array();
-        
         foreach ($letterCombinations as $word) {
-            if($this->isWordValid($word)) $words[] = $word;
+            if($this->isWordValid($word)) $this->currentWords[] = $word;
         }
         
-        return $words;
+        $this->currentWords;
     }
     
     /**
@@ -178,14 +144,29 @@ class ScrabbleGame
     }
     
     /**
-     * Get the value of a letter
-     *
-     * @param String $letter : The letter for which we want the value
-     * @return int : Value of the letter, 0 if not found
+     * Print the board of the game
      */
-    public function getLetterValue($letter) {
-        $letter = strtoupper($letter);
-        return empty($this->LetterValues[$letter]) ? 0 : $this->LetterValues[$letter];
+    public function printBoard() {
+        $this->board->printBoard();
+    }
+    
+    /**
+     * Print the draw of the current turn
+     */
+    public function printDraw() {
+        foreach ($this->currentDraw as $letter) {
+            $letter->printTile();
+        }
+    }
+    
+    /**
+     * Print the possible words of the current turn
+     */
+    public function printWords() {
+        echo '<table>';
+        foreach ($this->currentWords as $word) {
+            echo '<tr><td>'.$word.'</td></tr>';
+        }
+        echo '</table>';
     }
 }
-
