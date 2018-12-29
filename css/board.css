@@ -12,19 +12,8 @@ div.top {
 
 div.scrabble {
 	float: left;
+	padding-top: 5px;
 }
-
-/* div.left {
-	float: left;
-	width: 50%;
-	background-color: #FFFFFF;
-}
-
-div.right {
-	float: right;
-	width: 50%;
-	background-color: #D0D0D0;
-} */
 
 /* TOP ELEMENTS */
 div.toolbar {
@@ -34,7 +23,7 @@ div.toolbar {
 /* BOARD ELEMENTS */
 div.board {
 	float: left;
-	padding: 10px;
+	margin: 10px;
 	text-align: center;
 }
 
@@ -83,20 +72,27 @@ td.wt {
 /* TURN ELEMENTS */
 div.turn {
 	float: left;
-	padding: 10px;
+	margin: 10px;
 	background-color: #D0D0D0;
-	text-align: center;
+}
+
+div.boxtitle {
+	background-color: #266E49;
+	font-size: 12pt;
+	color: #FFFFFF;
+	padding: 5px;
 }
 
 div.currentdraw {
 	text-align: center;
+	padding: 10px;
 }
 
 div.letter {
 	background-color: #EEF79C;
 	font-size: 16pt;
 	padding: 5px;
-	margin: 0px;
+	margin: 2px;
 	float: left;
 	text-align: center;
 	line-height: 26px;
@@ -113,17 +109,23 @@ div.lettervalue {
 	font-weight: normal;
 }
 
+div.wordslist {
+	padding: 10px;
+}
+
 /* GAME ELEMENTS */
 div.game {
 	float: left;
-	padding: 10px;
-	background-color: #A6A6A6;
+	margin: 10px;
+	background-color: #D0D0D0;
 }
 
 div.score {
-	float: right;
-	border: 1px solid #FFFFFF;
-	width: 50px;
+	display: block;
 	text-align: center;
-	padding: 5px;
+	padding: 10px;
+}
+
+div.gameturns {
+	padding: 10px;
 }

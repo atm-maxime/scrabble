@@ -21,6 +21,10 @@ class ScrabbleBag {
         }
     }
     
+    public function getLetterValue($letter) {
+        return $this->letters[$letter]->getTileValue();
+    }
+    
     /**
      * Draw a letter from the bag
      * 

@@ -20,9 +20,9 @@ class ScrabbleTile {
         return $this->value;
     }
     
-    public function printTile() {
+    public function getTileHTML() {
         $tpl = file_get_contents('tpl/letter.tpl.php');
-        print strtr($tpl, array(
+        return strtr($tpl, array(
             '__LETTER__' => $this->getTileLetter(),
             '__VALUE__' => $this->getTileValue()
         ));

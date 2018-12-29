@@ -21,6 +21,21 @@ class ScrabbleBoard
         }
     }
     
+    public function setLetter($tile, $idx) {
+        list($x, $y) = $this->idx2i($idx);
+        $this->boardgame[$x][$y] = $tile;
+    }
+    
+    private function idx2i($idx) {
+        $x = ord(substr($idx,0,1)) - 65;
+        $y = (int)substr($idx,1,2) - 1;
+        return array($x,$y);
+    }
+    
+    private function i2idx($i, $j) {
+        return chr(65 + $i) . $j+1;
+    }
+    
     public function printBoard() {
         print '<table class="board" cellspacing="0">';
         
@@ -45,7 +60,7 @@ class ScrabbleBoard
             for ($j = 0; $j < 15; $j++) {
                 $y = $j+1;
                 $class = empty($this->boxes[$x.$y]) ? 'normal' : $this->boxes[$x.$y];
-                $letter = empty($this->boardgame[$i][$j]) ? '&nbsp;' : $this->boardgame[$i][$j]->printLetter;
+                $letter = empty($this->boardgame[$i][$j]) ? '&nbsp;' : $this->boardgame[$i][$j]->getTileHTML();
                 print '<td class="letterbox '.$class.'" id="'.$x.$y.'">'.$letter.'</td>';
             }
             print '</tr>';

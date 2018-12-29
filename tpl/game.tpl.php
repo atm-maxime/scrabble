@@ -3,11 +3,13 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="css/board.css">
 	<link rel="stylesheet" type="text/css" href="lib/fontawesome/css/all.css">
+	<script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+	<script type="text/javascript" src="js/scrabble.js"></script>
 </head>
 <body>
 
 <div class="top">
-	DUPLICATE.FR - Play Scrabble at home !  
+	DUPLICATE.FR - Le scrabble duplicate à la maison !
 	<div class="toolbar">
 		<i class="fas fa-gamepad fa-fw"></i>
 		<i class="fas fa-user-circle fa-fw"></i>
@@ -15,32 +17,54 @@
 </div>
 
 <div class="scrabble">
-	<div class="board">board
+	<div class="board">
 	<?php
 		$game->printBoard()
 	?>
 	</div>
-	<div class="turn">turn
+	<div class="turn">
+		<div class="boxtitle">
+			Tirage
+			<div class="toolbar">
+        		<i id="new_turn" class="fas fa-chevron-circle-right fa-fw"></i>
+        	</div>
+		</div>
 		<div class="currentdraw">
 		<?php 
     		$game->printDraw();
     	?>
 		</div>
-	
-		<div style="clear: both;">&nbsp;</div>
-    	<div class="wordslist">wordslist
+		<div class="boxtitle">
+			Mots possibles
+			<div class="toolbar">
+        		<i id="search_wordlist" class="fas fa-search fa-fw"></i>
+        	</div>
+		</div>
+    	<div class="wordslist">
     	<?php 
         	$game->printWords();
     	?>
     	</div>
 	</div>
-	<div class="game">game
-		<div class="score">score
-			599
+	<div class="game">
+		<div class="boxtitle">
+			Partie en cours
+			<div class="toolbar">
+        		<i id="score" class="fas fa-trophy fa-fw"></i>
+        	</div>
 		</div>
-		<div class="gameturns">gameturns
+		<div class="score">
+			Score : 000
+		</div>
+		<div class="boxtitle">
+			Coups joués
+			<div class="toolbar">
+        		<i id="game_turns" class="fas fa-history fa-fw"></i>
+        	</div>
+		</div>
+		<div class="gameturns">
     	<?php 
-    	   //printGameTurns($game);
+    	   $game->printGameTurns();
     	?>
     	</div>
 	</div>

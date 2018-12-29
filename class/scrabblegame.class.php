@@ -14,6 +14,8 @@ class ScrabbleGame
     private $bag;
     // Board game
     private $board;
+    // Game turns
+    private $gameTurns;
     
     // Number of letters for a draw, usually 7
     private $numberLetterDraw;
@@ -28,9 +30,11 @@ class ScrabbleGame
      * 
      * @param String $lang : Lang in which the game is played
      */
-    public function __construct($lang) {
+    public function __construct($lang='fr') {
         $this->lang = $lang;
         $this->numberLetterDraw = 7;
+        $this->currentDraw = array();
+        $this->currentWords = array();
         
         // Load dictionnary
         $this->dict = pspell_new($lang);
@@ -40,6 +44,9 @@ class ScrabbleGame
         
         // Load board
         $this->board = new ScrabbleBoard($lang);
+        
+        // Game turns
+        $this->gameTurns = array();
     }
     
     /**
@@ -53,6 +60,8 @@ class ScrabbleGame
         
         // Get all words possible
         $this->getAllCorrectWords();
+        
+        $this->board->setLetter(array_rand($this->currentDraw), 'B2');
         
         // @TODO continue...
     }
@@ -73,8 +82,6 @@ class ScrabbleGame
         }
     }
     
-    
-    
     /**
      * Get all correct words from the current letter draw
      * 
@@ -86,8 +93,17 @@ class ScrabbleGame
         $this->getAllLetterCombinations($letters, $letterCombinations);
         $letterCombinations = array_unique($letterCombinations);
         
+        $this->dict = pspell_new($this->lang);
+        $this->currentWords = array();
+        
         foreach ($letterCombinations as $word) {
-            if($this->isWordValid($word)) $this->currentWords[] = $word;
+            if($this->isWordValid($word)) {
+                $w = new stdClass();
+                $w->word = $word;
+                $w->score = $this->getWordValue($word);
+                $w->position = 'H5';
+                $this->currentWords[] = $w;
+            }
         }
         
         $this->currentWords;
@@ -127,6 +143,11 @@ class ScrabbleGame
         return true;
     }
     
+    public function selectWord($iWord) {
+        $this->gameTurns[] = $this->currentWords[$iWord];
+        $this->score+= $this->currentWords[$iWord]->score;
+    }
+    
     /**
      * Get the value of a word, sum of its letter values
      * 
@@ -137,7 +158,7 @@ class ScrabbleGame
         $points = 0;
         $word = str_split($word);
         foreach ($word as $l) {
-            $points+= $this->getLetterValue($l);
+            $points+= $this->bag->getLetterValue($l);
         }
         
         return $points;
@@ -154,19 +175,48 @@ class ScrabbleGame
      * Print the draw of the current turn
      */
     public function printDraw() {
+        $draw = array();
+        $i = 0;
+        $tpl = file_get_contents('tpl/draw.tpl.php');
         foreach ($this->currentDraw as $letter) {
-            $letter->printTile();
+            $draw['__'.$i.'__'] = $letter->getTileHTML();
+            $i++;
         }
+        for ($i; $i < $this->numberLetterDraw - count($this->currentDraw); $i++) {
+            $tile = new ScrabbleTile('', '');
+            $draw['__'.$i.'__'] = $tile->getTileHTML();
+        }
+        
+        print strtr($tpl, $draw);
     }
     
     /**
      * Print the possible words of the current turn
      */
     public function printWords() {
-        echo '<table>';
+        print '<table width="100%">';
         foreach ($this->currentWords as $word) {
-            echo '<tr><td>'.$word.'</td></tr>';
+            print '<tr>
+                    <td>'.$word->word.'</td>
+                    <td>'.$word->position.'</td>
+                    <td>'.$word->score.'</td>
+                    </tr>';
         }
-        echo '</table>';
+        print '</table>';
+    }
+    
+    /**
+     * Print the history of words played
+     */
+    public function printGameTurns() {
+        print '<table width="100%">';
+        foreach ($this->gameTurns as $word) {
+            print '<tr>
+                    <td>'.$word->word.'</td>
+                    <td>'.$word->position.'</td>
+                    <td>'.$word->score.'</td>
+                    </tr>';
+        }
+        print '</table>';
     }
 }
