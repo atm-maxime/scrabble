@@ -10,19 +10,23 @@ class ScrabbleGame
     // Game dictionnary, using PHP pspell library
     private $dict;
     
-    // Letters distribution, array containing the number of occurrence of each letter
+    // Letters bag containing ScrabbleLetter
     private $bag;
     // Board game
     private $board;
     // Game turns
     private $gameTurns;
+    // Game score
+    private $score;
     
     // Number of letters for a draw, usually 7
     private $numberLetterDraw;
     
     // Current draw
     public $currentDraw;
-    // Current words possible with current draw
+    // Current solutions possible with current draw
+    public $currentSolutions;
+    // Current words possible with current draw (= only existing words from current solutions + scores) 
     public $currentWords;
     
     /**
@@ -33,20 +37,22 @@ class ScrabbleGame
     public function __construct($lang='fr') {
         $this->lang = $lang;
         $this->numberLetterDraw = 7;
-        $this->currentDraw = array();
-        $this->currentWords = array();
         
         // Load dictionnary
         $this->dict = pspell_new($lang);
-        
         // Load scrabble bag
         $this->bag = new ScrabbleBag($lang);
-        
         // Load board
         $this->board = new ScrabbleBoard($lang);
         
-        // Game turns
+        // Game current turn
+        $this->currentDraw = array();
+        $this->currentWords = array();
+        $this->currentSolutions = array();
+        
+        // Game results
         $this->gameTurns = array();
+        $this->score = 0;
     }
     
     /**
@@ -54,31 +60,81 @@ class ScrabbleGame
      * 
      * @param String $rest : Remaining letters from previous turn
      */
-    public function newTurn($rest='') {
-        // Draw new letters
-        $this->draw($rest);
+    public function newTurn() {
+        // Turn initialization
+        $this->currentWords = array();
+        $this->currentSolutions = array();
         
-        // Get all words possible
-        $this->getAllCorrectWords();
-        
-        $this->board->setLetter(array_rand($this->currentDraw), 'B2');
-        
-        // @TODO continue...
+        // How many letters we need to draw ?
+        $nbToDraw = $this->numberLetterDraw - count($this->currentDraw);
+        // We draw them
+        $sletters = $this->bag->drawNLetters($nbToDraw);
+        // We add them to the current draw
+        $this->currentDraw = array_merge($this->currentDraw, $sletters);
     }
     
     /**
-     * Draw letters from the remaining pool
-     * 
-     * @param Array $rest : Remaining letters from previous turn
+     * Search for possible words to place on the board
      */
-    public function draw($rest=array()) {
-        $this->currentDraw = $rest;
+    public function getPossibleWords() {
+        $this->currentWords = array();
+        $this->getSolutions();
+        $this->getAllCorrectWords();
+    }
+    
+    
+    /**
+     * Search for every word combination possible with the current draw and the current board
+     * - 1 : Search on the board the list of boxes next to already played letters
+     * - 2 : For each boxes, set a letter on it
+     * - 3 : Search what words are created with this new letter and save it if all words are correct
+     * - 4 : Search the next boxes that can be used
+     * - 5 : For each box, set the next letter on it
+     * ... and so on recursively
+     * 
+     * Finally calculate the score of each word that has been saved and sort it
+     * Priority to horizontal words and the more on the top left possible 
+     */
+    public function getSolutions($position='', $direction='') {
+        $boxes = $this->board->getBoxesToUse($position, $direction);
         
-        while(count($this->currentDraw) < $this->numberLetterDraw && !$this->bag->isEmpty()) {
-            // Pick a random letter from the pool
-            $tile = $this->bag->drawLetter();
-            // Add letter to the current draw
-            $this->currentDraw[$tile->getTileLetter()] = $tile;
+//          print '<hr>GET SOLUTIONS FOR LETTERS : '.implode('.', array_keys($this->currentDraw));
+//          print '<br>Boxes : '.implode(' - ', $boxes);
+        
+        foreach ($boxes as $pos) { // for each possible box on the board
+            foreach ($this->currentDraw as $i => $slet) { // for each letter on the current draw
+                unset($this->currentDraw[$i]); // Remove letter from the current draw
+                
+                // First letter put on the board doesn't give direction, 2nd is
+                $l = $this->numberLetterDraw - count($this->currentDraw);
+                if($l > 1) $direction = $this->board->getDirection($position, $pos);
+                
+                $this->board->setLetter($slet, $pos); // Puts letter on the board
+                //$words = $this->board->searchWords($pos); // Search for words made with this new letter
+                $words  = array();
+                // Marche bien mais ne prend que les mots formé par la lettre $i à la position $pos,
+                // ne prend pas en compte les mots formé par la lettre précédente par exemple... 
+//                 print '<br>---<br>PUT '.$i.' IN '.$pos;
+//                 print '<br>';
+//                 foreach ($words as $w) {
+//                     print '<br>'.$w->getPosition().' : '.$w->getWordAsText();
+//                 }
+                //print_r($words);
+                // Check words here
+                //                 print '<hr> WORDS TO CHECK : ';print_r($this->currentWords);
+                //                 exit;
+                
+                
+                $this->currentWords = array_merge($this->currentWords, $words);
+                
+                if(!empty($this->currentDraw)) {
+                    $this->getSolutions($pos, $direction); // Do it again, recursively
+                }
+                
+                $this->board->unsetLetter($pos); // Remove letter from the board
+                $this->currentDraw[$i] = $slet;  // Letter goes back in the current draw
+            }
+            flush();
         }
     }
     
@@ -88,25 +144,23 @@ class ScrabbleGame
      * @return Array : Words
      */
     public function getAllCorrectWords() {
+        /*
         $letterCombinations = array();
         $letters = array_keys($this->currentDraw);
         $this->getAllLetterCombinations($letters, $letterCombinations);
         $letterCombinations = array_unique($letterCombinations);
+        */
         
         $this->dict = pspell_new($this->lang);
-        $this->currentWords = array();
+        //$this->currentWords = array();
         
-        foreach ($letterCombinations as $word) {
-            if($this->isWordValid($word)) {
-                $w = new stdClass();
-                $w->word = $word;
-                $w->score = $this->getWordValue($word);
-                $w->position = 'H5';
-                $this->currentWords[] = $w;
+        foreach ($this->currentWords as $i => $w) {
+            if(!$this->isWordValid($w->getWordAsText())) {
+                unset($this->currentWords[$i]);
             }
         }
         
-        $this->currentWords;
+        usort($this->currentWords, 'sort_soutions');
     }
     
     /**
@@ -115,7 +169,7 @@ class ScrabbleGame
      * @param Array $letters : Letters to combine
      * @param Array $results : All combinations possible
      */
-    private function getAllLetterCombinations(&$letters, &$results) {
+    /*private function getAllLetterCombinations(&$letters, &$results) {
         for ($i = 0; $i < count($letters); $i++)
         {
             $results[] = $letters[$i];
@@ -128,7 +182,25 @@ class ScrabbleGame
                 $results[] = $letters[$i] . $res;
             }
         }
-    }
+    }*/
+    
+    
+    /**
+     * Get the value of a word, sum of its letter values
+     *
+     * @param String $word : The word we want the value of
+     * @return int : Value of the word
+     */
+    /*public function getWordValue($word, $pos) {
+        $points = 0;
+        $word = str_split($word);
+        foreach ($word as $l) {
+            $lpoints = $this->bag->getLetterValue($l);
+            $points += $lpoints;
+        }
+        
+        return $points;
+    }*/
     
     /**
      * Check if the word is valid in the dictionnary
@@ -143,80 +215,77 @@ class ScrabbleGame
         return true;
     }
     
-    public function selectWord($iWord) {
-        $this->gameTurns[] = $this->currentWords[$iWord];
-        $this->score+= $this->currentWords[$iWord]->score;
-    }
-    
     /**
-     * Get the value of a word, sum of its letter values
+     * Selection of a word amongst possible words to play the turn
      * 
-     * @param String $word : The word we want the value of
-     * @return int : Value of the word
+     * @param int $iWord : Word identifier in currentWords array
      */
-    public function getWordValue($word) {
-        $points = 0;
-        $word = str_split($word);
-        foreach ($word as $l) {
-            $points+= $this->bag->getLetterValue($l);
-        }
-        
-        return $points;
+    public function selectWord($iWord) {
+        $this->board->setWord($this->currentWords[$iWord]);
+        // @TODO : remove placed letters from currentdraw
+        $this->gameTurns[] = $this->currentWords[$iWord];
+        $this->score+= $this->currentWords[$iWord]->getPoints();
     }
     
     /**
      * Print the board of the game
      */
-    public function printBoard() {
-        $this->board->printBoard();
+    public function getBoardHTML() {
+        return $this->board->getBoardHTML();
     }
     
     /**
      * Print the draw of the current turn
      */
-    public function printDraw() {
+    public function getCurrentDrawHTML() {
         $draw = array();
         $i = 0;
         $tpl = file_get_contents('tpl/draw.tpl.php');
-        foreach ($this->currentDraw as $letter) {
-            $draw['__'.$i.'__'] = $letter->getTileHTML();
+        foreach ($this->currentDraw as $slet) {
+            $draw['__'.$i.'__'] = $slet->getLetterHTML();
             $i++;
         }
         for ($i; $i < $this->numberLetterDraw - count($this->currentDraw); $i++) {
-            $tile = new ScrabbleTile('', '');
-            $draw['__'.$i.'__'] = $tile->getTileHTML();
+            $slet = new ScrabbleLetter('', '');
+            $draw['__'.$i.'__'] = $slet->getLetterHTML();
         }
         
-        print strtr($tpl, $draw);
+        return strtr($tpl, $draw);
     }
     
     /**
      * Print the possible words of the current turn
      */
-    public function printWords() {
-        print '<table width="100%">';
-        foreach ($this->currentWords as $word) {
-            print '<tr>
-                    <td>'.$word->word.'</td>
-                    <td>'.$word->position.'</td>
-                    <td>'.$word->score.'</td>
+    public function getWordsHTML() {
+        $words = '<table width="100%">';
+        foreach ($this->currentWords as $i => $word) {
+            $words.= '<tr>
+                    <td>'.$word->getWordAsText().'</td>
+                    <td>'.$word->getPosition().'</td>
+                    <td>'.$word->getPoints().'</td>
+                    <td><i class="fas fa-check-circle word" iword="'.$i.'"></i></td>
                     </tr>';
         }
-        print '</table>';
+        $words.= '</table>';
+        
+        return $words;
     }
     
     /**
-     * Print the history of words played
+     * Get the history of words played in the game
      */
-    public function printGameTurns() {
-        print '<table width="100%">';
-        foreach ($this->gameTurns as $word) {
-            print '<tr>
+    public function getGameTurnsHTML() {
+        $turns = '<table width="100%">';
+        foreach ($this->gameTurns as $i => $word) {
+            $turns.= '<tr>
+                    <td>'.($i+1).'</td>
                     <td>'.$word->word.'</td>
                     <td>'.$word->position.'</td>
                     <td>'.$word->score.'</td>
                     </tr>';
         }
-        print '</table>';
+        $turns.= '</table>';
+        
+        return $turns;
     }
 }

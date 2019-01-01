@@ -1,50 +1,24 @@
 <?php
 
-include_once 'class/scrabbletile.class.php';
+include_once 'class/scrabbleletter.class.php';
 
 /**
- * Class to manage a bag containing Scrabble tiles
+ * Class to manage a bag containing Scrabble letters
  */
 class ScrabbleBag {
-    private $letters; // Array containing letter tiles
-    private $lettersNb; // Array containing the number of each letter in the bag
+    private $letters; // Array containing Scrabble letter
     
     public function __construct($lang='fr') {
-        $this->nbTiles = 0;
+        $this->letters = array();
         
         // Load conf from file containing for each letter the value and number
         $conf = file('conf/'.$lang.'.letters.conf');
         foreach ($conf as $line) {
             $data = explode(',', $line);
-            $this->letters[$data[0]] = new ScrabbleTile($data[0], (int)$data[1]);
-            $this->lettersNb[$data[0]] = (int)$data[2];
+            for ($i = 0; $i < (int)$data[2]; $i++) {
+                $this->letters[] = new ScrabbleLetter($data[0], (int)$data[1]);
+            }
         }
-    }
-    
-    public function getLetterValue($letter) {
-        return $this->letters[$letter]->getTileValue();
-    }
-    
-    /**
-     * Draw a letter from the bag
-     * 
-     * @param String $letter : Use it to force the letter to draw
-     * @return ScrabbleTile : The tile corresponding to the drawn letter
-     */
-    public function drawLetter($letter='') {
-        if(empty($letter)) { // We draw a random tile from the bag
-            // Get all remaining letters in the bag
-            $pool = $this->getRemainingTiles();
-            // Pick a random letter from the bag
-            $letter = $pool[rand(0,count($pool)-1)];
-        }
-        
-        $tile = $this->letters[$letter];
-        
-        // Letter is no longer available in the pool
-        $this->lettersNb[$letter]--;
-
-        return $tile;
     }
     
     /**
@@ -52,24 +26,75 @@ class ScrabbleBag {
      * @return boolean
      */
     public function isEmpty() {
-        return (array_sum($this->lettersNb) == 0);
+        return (count($this->letters) == 0);
     }
     
     /**
-     * Generate an array containing all remaining letters from the bag
-     * Used to draw a random letter from the remaining ones
-     *
-     * @return Array : All remaining letters
+     * Give the number of letters in the bag
+     * 
+     * @return int Number of Scrabble letters remaining in the bag
      */
-    private function getRemainingTiles() {
-        $remainingLetters = array();
+    public function getNbLetters() {
+        return count($this->letters);
+    }
+    
+    /**
+     * Give the number of letters in the bag by letter (e.g. A => 3, B => 1, ...)
+     * 
+     * @return Array containing the number of letters remaining in the bag by letter
+     */
+    public function getNbByLetter() {
+        $res = array();
+        foreach ($this->letters as $slet) {
+            $l = $slet->getText();
+            if(empty($res[$l])) $res[$l] = 0;
+            $res[$l]++;
+        }
+        return $res;
+    }
+    
+    /**
+     * Draw a letter from the bag
+     * 
+     * @param String $letter Use it to force the letter to draw
+     * @return ScrabbleLetter The Scrabbleletter corresponding to the drawn letter
+     */
+    public function draw1Letter($letter='') {
+        if($this->isEmpty()) return false;
         
-        foreach($this->lettersNb as $letter => $nb) {
-            for ($i = 0; $i < $nb; $i++) {
-                $remainingLetters[] = $letter;
+        $iLet = false;
+        if(empty($letter)) { // We draw a random letter from the bag
+            $iLet = array_rand($this->letters);
+        } else { // We search for a letter corresponding to $letter
+            foreach ($this->letters as $i => $slet) {
+                if($slet->getText() == $letter) {
+                    $iLet = $i;
+                    break;
+                }
             }
         }
         
-        return $remainingLetters;
+        if($iLet !== false) {
+            $slet = $this->letters[$iLet];
+            unset($this->letters[$iLet]);
+        }
+
+        return $slet;
+    }
+    
+    /**
+     * Draw several letters from the bag
+     *
+     * @param int $number The number of letters to draw
+     * @return Array Array containing the drawn Scrabbleletters
+     */
+    public function drawNLetters($number=1) {
+        $sletters = array();
+        for ($i = 0; $i < $number; $i++) {
+            if($slet = $this->draw1Letter()) $sletters[] = $slet;
+            else break;
+        }
+        
+        return $sletters;
     }
 }

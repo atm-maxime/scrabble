@@ -20,6 +20,10 @@ div.toolbar {
 	float: right;
 }
 
+i.action {
+	cursor: pointer;
+}
+
 /* BOARD ELEMENTS */
 div.board {
 	float: left;

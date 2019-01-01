@@ -11,7 +11,7 @@
 <div class="top">
 	DUPLICATE.FR - Le scrabble duplicate à la maison !
 	<div class="toolbar">
-		<i class="fas fa-gamepad fa-fw"></i>
+		<i id="new_game" class="fas fa-gamepad fa-fw action"></i>
 		<i class="fas fa-user-circle fa-fw"></i>
 	</div>
 </div>
@@ -19,31 +19,29 @@
 <div class="scrabble">
 	<div class="board">
 	<?php
-		$game->printBoard()
+		print $game->getBoardHTML()
 	?>
 	</div>
 	<div class="turn">
 		<div class="boxtitle">
 			Tirage
 			<div class="toolbar">
-        		<i id="new_turn" class="fas fa-chevron-circle-right fa-fw"></i>
+        		<i id="new_turn" class="fas fa-chevron-circle-right fa-fw action"></i>
         	</div>
 		</div>
 		<div class="currentdraw">
 		<?php 
-    		$game->printDraw();
+    		print $game->getCurrentDrawHTML();
     	?>
 		</div>
 		<div class="boxtitle">
 			Mots possibles
 			<div class="toolbar">
-        		<i id="search_wordlist" class="fas fa-search fa-fw"></i>
+        		<i id="search_solutions" class="fas fa-search fa-fw action"></i>
         	</div>
 		</div>
-    	<div class="wordslist">
-    	<?php 
-        	$game->printWords();
-    	?>
+    	<div class="solutions">
+    	
     	</div>
 	</div>
 	<div class="game">
@@ -63,9 +61,7 @@
         	</div>
 		</div>
 		<div class="gameturns">
-    	<?php 
-    	   $game->printGameTurns();
-    	?>
+    	
     	</div>
 	</div>
 </div>
