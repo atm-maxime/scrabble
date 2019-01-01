@@ -11,7 +11,7 @@
 <div class="top">
 	DUPLICATE.FR - Le scrabble duplicate à la maison !
 	<div class="toolbar">
-		<i id="new_game" class="fas fa-gamepad fa-fw action"></i>
+		<i id="new_game" class="fas fa-gamepad fa-fw action" title="New game"></i>
 		<i class="fas fa-user-circle fa-fw"></i>
 	</div>
 </div>
@@ -26,7 +26,7 @@
 		<div class="boxtitle">
 			Tirage
 			<div class="toolbar">
-        		<i id="new_turn" class="fas fa-chevron-circle-right fa-fw action"></i>
+        		<i id="new_turn" class="fas fa-chevron-circle-right fa-fw action" title="New turn"></i>
         	</div>
 		</div>
 		<div class="currentdraw">
@@ -37,7 +37,7 @@
 		<div class="boxtitle">
 			Mots possibles
 			<div class="toolbar">
-        		<i id="search_solutions" class="fas fa-search fa-fw action"></i>
+        		<i id="search_solutions" class="fas fa-search fa-fw action" title="Search"></i>
         	</div>
 		</div>
     	<div class="solutions">

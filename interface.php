@@ -19,7 +19,7 @@ if($action == 'new_game') {
     //$game->getAllCorrectWords();
     echo '<pre>';
     $game->getPossibleWords();
-    $res['solutions'] = $game->getWordsHTML();
+    //$res['solutions'] = $game->getWordsHTML();
 } else if($action == 'select_word') {
     $iWord = $_REQUEST['iword'];
     $game->selectWord($iWord);

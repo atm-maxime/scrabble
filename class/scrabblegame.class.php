@@ -98,8 +98,8 @@ class ScrabbleGame
     public function getSolutions($position='', $direction='') {
         $boxes = $this->board->getBoxesToUse($position, $direction);
         
-//          print '<hr>GET SOLUTIONS FOR LETTERS : '.implode('.', array_keys($this->currentDraw));
-//          print '<br>Boxes : '.implode(' - ', $boxes);
+          print '<hr>GET SOLUTIONS FOR LETTERS : '.implode('.', array_keys($this->currentDraw));
+          print '<br>Boxes : '.implode(' - ', $boxes);
         
         foreach ($boxes as $pos) { // for each possible box on the board
             foreach ($this->currentDraw as $i => $slet) { // for each letter on the current draw

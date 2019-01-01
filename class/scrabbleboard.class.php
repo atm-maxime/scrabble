@@ -7,10 +7,17 @@ class ScrabbleBoard
     private $boxes;
     private $boardgame;
     
+    // Number of lines on the board
+    private $lineNumber;
+    // Number of columns on the board
+    private $colNumber;
+    // Central box of the board
+    private $centralBox;
+    
     public function __construct($lang) {
         $this->lineNumber = 15;
         $this->colNumber = 15;
-        $this->centralBox = 'H8';
+        $this->centralBox = '7,7';
         
         $conf = file('conf/'.$lang.'.board.conf');
         foreach ($conf as $line) {
@@ -50,53 +57,47 @@ class ScrabbleBoard
     }
     
     /**
-     * Sets a letter on the board to the indicated position
-     * @param ScrabbleLetter $tile : The tile to set
-     * @param String $idx : The position where to set the tile
+     * Sets a letter on the board to the indicated index
+     * 
+     * @param ScrabbleLetter $slet The letter to set on the board
+     * @param String $idx The index where to set the letter (e.g. 4,6 = line 4, col 6)
      */
-    public function setLetter($tile, $idx) {
-        list($x, $y) = $this->idx2i($idx);
-        $this->boardgame[$x][$y] = $tile;
+    public function setLetter($slet, $idx) {
+        list($l, $c) = explode(',', $idx);
+        $this->boardgame[$l][$c] = $slet;
     }
     
+    /**
+     * Remove a letter off the board from the indicated index
+     * 
+     * @param String $idx The index where to remove the letter (e.g. 4,6 = line 4, col 6)
+     * @return ScrabbleLetter The removed letter
+     */
     public function unsetLetter($idx) {
-        list($x, $y) = $this->idx2i($idx);
-        $this->boardgame[$x][$y] = '';
+        list($l, $c) = explode(',', $idx);
+        $slet = $this->boardgame[$l][$c];
+        $this->boardgame[$l][$c] = '';
+        
+        return $slet;
     }
     
     /**
-     * Converts an index position into x,y coordinates (e.g. H5 => 7,4)
-     * @param String $idx : The alphanum position index
-     * @return Array : The x,y coordinates
-     */
-    private function idx2i($idx) {
-        if(!is_numeric(substr($idx,0,1))) {
-            $alpha = substr($idx,0,1);
-            $numeric = substr($idx,1,2);
-        } else {
-            $alpha = substr($idx,-1,1);
-            $numeric = str_replace($alpha, '', $idx);
-        }
-        $x = ord($alpha) - 65;
-        $y = (int)$numeric - 1;
-        return array($x,$y);
-    }
-    
-    /**
-     * Converts coordinates into an index position (e.g. 7,4 => H5)
-     * @param $x : The x coordinate (line)
-     * @param $y : The y coordinate (column)
+     * Converts a box index into an alphanumeric position (e.g. 7,4 h => H5)
+     * 
+     * @param String $idx The index value (e.g. 4,6 = line 4, col 6)
+     * @param String $dir The direction wanted (h or v)
      * @return String : The alphanum position index
      */
-    private function i2idx($i, $j, $dir='h') {
-        $x = chr(65 + $i);
-        $y = ($j+1);
-        return ($dir == 'h') ? ($x.$y) : ($y.$x) ;
+    private function i2idx($idx, $dir='h') {
+        list($l, $c) = explode(',', $idx);
+        $a = chr(65 + (int)$l);
+        $n = ((int)$c+1);
+        return ($dir == 'h') ? ($a.$n) : ($n.$a) ;
     }
     
-    public function getBoxType($position) {
-        list($x,$y) = $this->idx2i($position);
-        return $this->boxes[$x][$y];
+    public function getBoxType($idx) {
+        list($l, $c) = explode(',', $idx);
+        return $this->boxes[$l][$c];
     }
     
     public function getBoardHTML() {
@@ -138,29 +139,31 @@ class ScrabbleBoard
      * FUNCTIONS USED TO SEARCH POSSIBLE SOLUTIONS ON THE BOARD
      ********************************************************************************/
     /**
-     * Search for all position usable on the current board, or regarding
+     * Search for all positions usable on the current board, or regarding an index
      * 
-     * @return Array $boxes : Usable boxes
+     * @param $idx String The index to search from
+     * @param $dir String The direction to search to
+     * 
+     * @return Array $boxes Array containing index of usable boxes
      */
-    public function getBoxesToUse($position='', $direction='') {
+    public function getBoxesToUse($idx='', $dir='') {
        $boxes = array();
        
        // No specific position, we search through the whole board
-       if(empty($position)) {
+       if(empty($idx)) {
            $emptyBoard = true;
-           foreach ($this->boardgame as $i => $line) {
-               foreach ($line as $j => $box) {
-                   // If the box contains an object (a ScrabbleTile), we search for connected empty boxes
+           foreach ($this->boardgame as $l => $line) {
+               foreach ($line as $c => $box) {
+                   // If the box contains an object (a ScrabbleLetter), we search for connected empty boxes
                    if(is_object($box)) {
                        $emptyBoard = false;
-                       $boxes = array_merge($boxes, $this->getBoxesAround($i, $j, $direction));
+                       $boxes = array_merge($boxes, $this->getBoxesAround("$l,$c", $dir));
                    }
                }
            }
        } else {
            $emptyBoard = false;
-           list($x, $y) = $this->idx2i($position);
-           $boxes = $this->getBoxesAround($x, $y, $direction);
+           $boxes = $this->getBoxesAround($idx, $dir);
        }
        
        // If no box usable, this means the board is empty, so only usable is the central box
@@ -171,59 +174,64 @@ class ScrabbleBoard
        return array_unique($boxes);
     }
     
-    public function getDirection($a, $b='') {
-        if(empty($b)) {
-            if(is_numeric(substr($a,0,1))) return 'v';
-            return 'h';
-        } else {
-            list($x,$y) = $this->idx2i($a);
-            list($i,$j) = $this->idx2i($b);
-            if($x == $i) return 'h';
-            if($y == $j) return 'v';
-        }
+    /**
+     * Get the direction (h or v) regarding 2 indexes
+     * 
+     * @param String $idx1 First index
+     * @param String $idx2 Second index
+     * @return String h or v, false if the 2 indexes are not on the same line or column
+     */
+    public function getDirection($idx1, $idx2) {
+        list($l1, $c1) = explode(',', $idx1);
+        list($l2, $c2) = explode(',', $idx2);
+        if($l1 == $l2) return 'h'; // Indexes are on the same line, direction is horizontal
+        if($c1 == $c2) return 'v'; // Indexes are on the same column, direction is vertical
+        
+        return false;
     }
     
     /**
      * Search empty boxes around the given position, in the given direction
-     * @param int $i : The x coordinate (line)
-     * @param int $j : The y coordinate (column)
-     * @param string $dir : The direction to search (h or v)
+     * 
+     * @param String $idx An index value (e.g. 4,6 = line 4, col 6)
+     * @param String $dir The direction to search (h or v)
      * @return Array : The list of empty boxes
      */
-    private function getBoxesAround($i, $j, $dir='') {
+    private function getBoxesAround($idx, $dir='') {
+        list($l, $c) = explode(',', $idx);
         $boxes = array();
         
         // Search 
         if(empty($dir) || $dir == 'v') {
             // Search up
-            $x = $i;
-            while(isset($this->boardgame[$x][$j]) && !empty($this->boardgame[$x][$j])) {
+            $x = $l;
+            while(isset($this->boardgame[$x][$c]) && !empty($this->boardgame[$x][$c])) {
                 $x--;
             }
-            if(isset($this->boardgame[$x][$j])) $boxes[] = $this->i2idx($x, $j);
+            if(isset($this->boardgame[$x][$c])) $boxes[] = "$x,$c";
             
             // Search down
-            $x = $i;
-            while(isset($this->boardgame[$x][$j]) && !empty($this->boardgame[$x][$j])) {
+            $x = $l;
+            while(isset($this->boardgame[$x][$c]) && !empty($this->boardgame[$x][$c])) {
                 $x++;
             }
-            if(isset($this->boardgame[$x][$j])) $boxes[] = $this->i2idx($x, $j);
+            if(isset($this->boardgame[$x][$c])) $boxes[] = "$x,$c";
         }
         
         if(empty($dir) || $dir == 'h') {
             // Search left
-            $y = $j;
-            while(isset($this->boardgame[$i][$y]) && !empty($this->boardgame[$i][$y])) {
+            $y = $c;
+            while(isset($this->boardgame[$l][$y]) && !empty($this->boardgame[$l][$y])) {
                 $y--;
             }
-            if(isset($this->boardgame[$i][$y])) $boxes[] = $this->i2idx($i, $y);
+            if(isset($this->boardgame[$l][$y])) $boxes[] = "$l,$y";
             
             // Search right
-            $y = $j;
-            while(isset($this->boardgame[$i][$y]) && !empty($this->boardgame[$i][$y])) {
+            $y = $c;
+            while(isset($this->boardgame[$c][$y]) && !empty($this->boardgame[$c][$y])) {
                 $y++;
             }
-            if(isset($this->boardgame[$i][$y])) $boxes[] = $this->i2idx($i, $y);
+            if(isset($this->boardgame[$c][$y])) $boxes[] = "$l,$y";
         }
         
         return $boxes;
