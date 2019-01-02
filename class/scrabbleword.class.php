@@ -5,12 +5,24 @@
  */
 class ScrabbleWord {
     private $letters;
+    private $index;
+    private $direction;
     private $position;
     private $points;
     
-    public function __construct($position) {
-        $this->position = $position;
+    public function __construct($idx, $dir, $pos) {
+        $this->index = $idx;
+        $this->direction = $dir;
+        $this->position = $pos;
         $this->letters = array();
+    }
+    
+    public function getIndex() {
+        return $this->index;
+    }
+    
+    public function getDirection() {
+        return $this->direction;
     }
     
     public function getPosition() {

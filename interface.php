@@ -13,13 +13,13 @@ if($action == 'new_game') {
     $res['board'] = $game->getBoardHTML();
     $res['currentdraw'] = $game->getCurrentDrawHTML();
 } else if($action == 'new_turn') {
-    $game->newTurn();
+    $game->newTurn(true);
     $res['currentdraw'] = $game->getCurrentDrawHTML();
 } else if($action == 'list_solutions') {
     //$game->getAllCorrectWords();
-    echo '<pre>';
+    //echo '<pre>';
     $game->getPossibleWords();
-    //$res['solutions'] = $game->getWordsHTML();
+    $res['solutions'] = $game->getWordsHTML();
 } else if($action == 'select_word') {
     $iWord = $_REQUEST['iword'];
     $game->selectWord($iWord);

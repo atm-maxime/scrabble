@@ -15,10 +15,9 @@ class ScrabbleBoard
     private $centralBox;
     
     public function __construct($lang) {
-        $this->lineNumber = 15;
-        $this->colNumber = 15;
-        $this->centralBox = '7,7';
-        
+        $this->lineNumber = 5;
+        $this->colNumber = 5;
+        $this->centralBox = '2,2';        
         $conf = file('conf/'.$lang.'.board.conf');
         foreach ($conf as $line) {
             $data = explode(',', $line);
@@ -81,20 +80,6 @@ class ScrabbleBoard
         return $slet;
     }
     
-    /**
-     * Converts a box index into an alphanumeric position (e.g. 7,4 h => H5)
-     * 
-     * @param String $idx The index value (e.g. 4,6 = line 4, col 6)
-     * @param String $dir The direction wanted (h or v)
-     * @return String : The alphanum position index
-     */
-    private function i2idx($idx, $dir='h') {
-        list($l, $c) = explode(',', $idx);
-        $a = chr(65 + (int)$l);
-        $n = ((int)$c+1);
-        return ($dir == 'h') ? ($a.$n) : ($n.$a) ;
-    }
-    
     public function getBoxType($idx) {
         list($l, $c) = explode(',', $idx);
         return $this->boxes[$l][$c];
@@ -109,7 +94,7 @@ class ScrabbleBoard
         for ($i = 0; $i < $this->colNumber; $i++) {
             $y = $i+1;
             $board.= '<td class="idx">';
-            $board.= $y;
+            $board.= $i;
             $board.= '</td>';
         }
         $board.= '</tr>';
@@ -119,7 +104,7 @@ class ScrabbleBoard
             $x = chr(65 + $i);
             $board.= '<tr class="boardline">';
             $board.= '<td class="idx">';
-            $board.= $x;
+            $board.= $i;
             $board.= '</td>';
             for ($j = 0; $j < $this->colNumber; $j++) {
                 $y = $j+1;
@@ -244,48 +229,48 @@ class ScrabbleBoard
      * @return Array : Words found
      */
     public function searchWords($position) {
-        list($i, $j) = $this->idx2i($position);
+        list($l, $c) = explode(',', $position);
         // If there is no tile on this position, there is no word to search
-        if(empty($this->boardgame[$i][$j])) return array();
+        if(empty($this->boardgame[$l][$c])) return array();
         
         $words = array();
         
         // Search for vertical words
         $dir = 'v'; 
-        $x = $i;
-        $y = $j;
+        $x = $l;
+        $y = $c;
         // We go up the board to find the first letter of the word
         while(isset($this->boardgame[$x][$y]) && is_object($this->boardgame[$x][$y])) {
             $x--;
         }
         $x++;
-        $pos = $this->i2idx($x, $y, $dir);
-        $sw = new ScrabbleWord($pos);
+        $idx = "$x,$y";
+        $sw = new ScrabbleWord($idx, $dir, $this->idx2an($idx, $dir));
         while(isset($this->boardgame[$x][$y]) && is_object($this->boardgame[$x][$y])) {
-            $sw->addTile($this->boardgame[$x][$y]);
+            $sw->addLetter($this->boardgame[$x][$y]);
             $x++;
         }
         if($sw->getWordLength() > 1) {
-            $sw->setScore($this->calculateScore($sw));
+            $this->calculateScore($sw);
             $words[] = $sw;
         }
         
         // Search for horizontal word
-        $x = $i;
-        $y = $j;
+        $x = $l;
+        $y = $c;
         $dir = 'h';
         while(isset($this->boardgame[$x][$y]) && is_object($this->boardgame[$x][$y])) {
             $y--;
         }
         $y++;
-        $pos = $this->i2idx($x, $y, $dir);
-        $sw = new ScrabbleWord($pos);
+        $idx = "$x,$y";
+        $sw = new ScrabbleWord($idx, $dir, $this->idx2an($idx, $dir));
         while(isset($this->boardgame[$x][$y]) && is_object($this->boardgame[$x][$y])) {
-            $sw->addTile($this->boardgame[$x][$y]);
+            $sw->addLetter($this->boardgame[$x][$y]);
             $y++;
         }
         if($sw->getWordLength() > 1) {
-            $sw->setScore($this->calculateScore($sw));
+            $this->calculateScore($sw);
             $words[] = $sw;
         }
         
@@ -293,8 +278,55 @@ class ScrabbleBoard
     }
     
     private function calculateScore($word) {
+        list($l, $c) = explode(',', $word->getIndex());
         
-        return 10;
+        $points = 0;
+        $wd = 0; $wt = 0;
+        for ($i = 0; $i < $word->getWordLength(); $i++) {
+            $lVal = $word->getLetter($i)->getValue();
+            $pos = $this->idx2an("$l,$c");
+            if(isset($this->boxes[$pos])) {
+                if($this->boxes[$pos] == 'ld') $lVal*=2;
+                if($this->boxes[$pos] == 'lt') $lVal*=3;
+                if($this->boxes[$pos] == 'wd') $wd++;
+                if($this->boxes[$pos] == 'wt') $wt++;
+            }
+            if($word->getDirection() == 'v') $l++;
+            if($word->getDirection() == 'h') $c++;
+            $points+=$lVal;
+        }
+        $points*= pow(2, $wd);
+        $points*= pow(3, $wt);
+        
+        $word->setPoints($points);
+        
+        //return 10;
+    }
+    
+    /**
+     * Converts a box index into an alphanumeric position (e.g. 7,4 h => H5)
+     *
+     * @param String $idx The index value (e.g. 4,6 = line 4, col 6)
+     * @param String $dir The direction wanted (h or v)
+     * @return String : The alphanum position index
+     */
+    private function idx2an($idx, $dir='h') {
+        list($l, $c) = explode(',', $idx);
+        $a = chr(65 + (int)$l);
+        $n = ((int)$c+1);
+        return ($dir == 'h') ? ($a.$n) : ($n.$a) ;
+    }
+    
+    private function an2idx($an, $dir='h') {
+        if(!is_numeric(substr($an,0,1))) {
+            $alpha = substr($an,0,1);
+        } else {
+            $alpha = substr($an,-1);
+        }
+        $num = (int)str_replace($alpha, '', $an);
+        $l = (int)(ord($alpha) - 65);
+        $c = $num - 1;
+        return "$l,$c";
     }
 }
 

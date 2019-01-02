@@ -97,4 +97,14 @@ class ScrabbleBag {
         
         return $sletters;
     }
+    
+    public function put1Letter($sletter) {
+        $this->letters[] = $sletter;
+    }
+    
+    public function putNLetters($sletters) {
+        foreach ($sletters as $slet) {
+            $this->letters[] = $slet;
+        }
+    }
 }

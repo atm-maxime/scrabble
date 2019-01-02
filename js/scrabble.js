@@ -29,15 +29,15 @@ $(document).ready(function() {
 	$('#search_solutions').bind('click', function() {
 		$.ajax({
 			url: 'interface.php',
-			//dataType: 'json',
+			dataType: 'json',
 			data: {
 				'action': 'list_solutions'
 			}
 		}).done(function(data) {
-			alert(data);
-			$('div.solutions').html(data);
+			//alert(data);
+			$('div.solutions').html(data.solutions);
 			
-			/*$('i.word').bind('click', function() {
+			$('i.word').bind('click', function() {
 				$.ajax({
 					url: 'interface.php',
 					dataType: 'json',
@@ -49,7 +49,7 @@ $(document).ready(function() {
 					$('div.board').html(data.board);
 					$('div.currentdraw').html(data.currentdraw);
 				});
-			});*/
+			});
 		});
 	});
 });

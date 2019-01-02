@@ -36,7 +36,7 @@ class ScrabbleGame
      */
     public function __construct($lang='fr') {
         $this->lang = $lang;
-        $this->numberLetterDraw = 7;
+        $this->numberLetterDraw = 3;
         
         // Load dictionnary
         $this->dict = pspell_new($lang);
@@ -60,10 +60,14 @@ class ScrabbleGame
      * 
      * @param String $rest : Remaining letters from previous turn
      */
-    public function newTurn() {
+    public function newTurn($emptyDraw=false) {
         // Turn initialization
         $this->currentWords = array();
         $this->currentSolutions = array();
+        if($emptyDraw) {
+            $this->bag->putNLetters($this->currentDraw);
+            $this->currentDraw = array();
+        }
         
         // How many letters we need to draw ?
         $nbToDraw = $this->numberLetterDraw - count($this->currentDraw);
@@ -98,8 +102,9 @@ class ScrabbleGame
     public function getSolutions($position='', $direction='') {
         $boxes = $this->board->getBoxesToUse($position, $direction);
         
-          print '<hr>GET SOLUTIONS FOR LETTERS : '.implode('.', array_keys($this->currentDraw));
-          print '<br>Boxes : '.implode(' - ', $boxes);
+//         print '<hr>GET SOLUTIONS FOR LETTERS : '.$this->tmpGetCurrentDrawText().'<hr>';
+//         print 'Boxes found : '.implode(' - ', $boxes);
+//         print '<br>---------------';
         
         foreach ($boxes as $pos) { // for each possible box on the board
             foreach ($this->currentDraw as $i => $slet) { // for each letter on the current draw
@@ -110,20 +115,10 @@ class ScrabbleGame
                 if($l > 1) $direction = $this->board->getDirection($position, $pos);
                 
                 $this->board->setLetter($slet, $pos); // Puts letter on the board
-                //$words = $this->board->searchWords($pos); // Search for words made with this new letter
-                $words  = array();
+                $words = $this->board->searchWords($pos); // Search for words made with this new letter
                 // Marche bien mais ne prend que les mots formé par la lettre $i à la position $pos,
                 // ne prend pas en compte les mots formé par la lettre précédente par exemple... 
-//                 print '<br>---<br>PUT '.$i.' IN '.$pos;
-//                 print '<br>';
-//                 foreach ($words as $w) {
-//                     print '<br>'.$w->getPosition().' : '.$w->getWordAsText();
-//                 }
-                //print_r($words);
-                // Check words here
-                //                 print '<hr> WORDS TO CHECK : ';print_r($this->currentWords);
-                //                 exit;
-                
+//                 print '<br>PUT '.$slet->getText().' IN '.$pos;
                 
                 $this->currentWords = array_merge($this->currentWords, $words);
                 
@@ -131,10 +126,15 @@ class ScrabbleGame
                     $this->getSolutions($pos, $direction); // Do it again, recursively
                 }
                 
+//                 print '<br>Solutions => ';
+//                 foreach ($words as $w) {
+//                     print $w->getWordAsText().', ';
+//                 }
                 $this->board->unsetLetter($pos); // Remove letter from the board
                 $this->currentDraw[$i] = $slet;  // Letter goes back in the current draw
             }
-            flush();
+            //flush();
+//             print '<br>Next box...';
         }
     }
     
@@ -160,7 +160,8 @@ class ScrabbleGame
             }
         }
         
-        usort($this->currentWords, 'sort_soutions');
+        usort($this->currentWords, 'sort_soutions_by_points');
+//         usort($this->currentWords, 'sort_soutions_by_position');
     }
     
     /**
@@ -232,6 +233,14 @@ class ScrabbleGame
      */
     public function getBoardHTML() {
         return $this->board->getBoardHTML();
+    }
+    
+    public function tmpGetCurrentDrawText() {
+        $w = '';
+        foreach ($this->currentDraw as $slet) {
+            $w.= $slet->getText();
+        };
+        return $w;
     }
     
     /**
