@@ -7,17 +7,23 @@ class ScrabbleBoard
     private $boxes;
     private $boardgame;
     
+    public $boardSize;
+    
     // Number of lines on the board
     private $lineNumber;
     // Number of columns on the board
     private $colNumber;
     // Central box of the board
     private $centralBox;
+    // Anchors
+    public $anchors;
     
     public function __construct($lang) {
-        $this->lineNumber = 5;
-        $this->colNumber = 5;
-        $this->centralBox = '2,2';        
+        $this->boardSize = 7;
+        $this->lineNumber = $this->boardSize;
+        $this->colNumber = $this->boardSize;
+        $this->centralBox = (($this->boardSize - 1)/2).','.(($this->boardSize - 1)/2);    
+        
         $conf = file('conf/'.$lang.'.board.conf');
         foreach ($conf as $line) {
             $data = explode(',', $line);
@@ -30,6 +36,60 @@ class ScrabbleBoard
             for ($c = 0; $c < $this->colNumber; $c++) {
                 $this->boardgame[$l][$c] = '';
             }
+        }
+    }
+    
+    /**
+     * This function must set all tiles where it's possible to put connect with the possible connecting letter
+     * Not finished
+     * 
+     * @param string $idx
+     */
+    public function updateAnchors($idx='') {
+        if(empty($idx)) {
+            foreach ($this->boardgame as $l => $line) {
+                foreach ($line as $c => $box) {
+                    // If the box contains an object (a ScrabbleLetter), we search for connected empty boxes
+                    if(is_object($box)) {
+                        $this->updateAnchors("$l,$c");
+                    }
+                }
+            }
+        } else {
+            list($l, $c) = explode(',', $idx);
+            if(is_object($this->boardgame[$l][$c])) {
+                // Search left
+                $y = $c;
+                while(isset($this->boardgame[$l][$y]) && !empty($this->boardgame[$l][$y])) {
+                    $y--;
+                }
+                if(isset($this->boardgame[$l][$y])) $boxes[] = "$l,$y";
+                
+                // Search right
+                $y = $c;
+                while(isset($this->boardgame[$l][$y]) && !empty($this->boardgame[$l][$y])) {
+                    $y++;
+                }
+                if(isset($this->boardgame[$l][$y])) $boxes[] = "$l,$y";
+                
+                // Search up
+                $x = $l;
+                while(isset($this->boardgame[$x][$c]) && !empty($this->boardgame[$x][$c])) {
+                    $x--;
+                }
+                if(isset($this->boardgame[$x][$c])) $boxes[] = "$x,$c";
+                
+                // Search down
+                $x = $l;
+                while(isset($this->boardgame[$x][$c]) && !empty($this->boardgame[$x][$c])) {
+                    $x++;
+                }
+                if(isset($this->boardgame[$x][$c])) $boxes[] = "$x,$c";
+            }
+        }
+        
+        if(empty($this->anchors)) {
+            $this->anchors[$this->centralBox] = array();
         }
     }
     
@@ -213,10 +273,10 @@ class ScrabbleBoard
             
             // Search right
             $y = $c;
-            while(isset($this->boardgame[$c][$y]) && !empty($this->boardgame[$c][$y])) {
+            while(isset($this->boardgame[$l][$y]) && !empty($this->boardgame[$l][$y])) {
                 $y++;
             }
-            if(isset($this->boardgame[$c][$y])) $boxes[] = "$l,$y";
+            if(isset($this->boardgame[$l][$y])) $boxes[] = "$l,$y";
         }
         
         return $boxes;

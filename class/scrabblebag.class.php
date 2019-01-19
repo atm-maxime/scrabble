@@ -41,7 +41,7 @@ class ScrabbleBag {
     /**
      * Give the number of letters in the bag by letter (e.g. A => 3, B => 1, ...)
      * 
-     * @return Array containing the number of letters remaining in the bag by letter
+     * @return Array containing the number of letters in the bag by letter
      */
     public function getNbByLetter() {
         $res = array();
@@ -57,9 +57,9 @@ class ScrabbleBag {
      * Draw a letter from the bag
      * 
      * @param String $letter Use it to force the letter to draw
-     * @return ScrabbleLetter The Scrabbleletter corresponding to the drawn letter
+     * @return ScrabbleLetter The Scrabbleletter corresponding to the drawn letter, false if bag is empty or no $letter in the bag
      */
-    public function draw1Letter($letter='') {
+    public function draw1Letter(String $letter='') {
         if($this->isEmpty()) return false;
         
         $iLet = false;
@@ -77,6 +77,8 @@ class ScrabbleBag {
         if($iLet !== false) {
             $slet = $this->letters[$iLet];
             unset($this->letters[$iLet]);
+        } else {
+            return false;
         }
 
         return $slet;
@@ -88,7 +90,7 @@ class ScrabbleBag {
      * @param int $number The number of letters to draw
      * @return Array Array containing the drawn Scrabbleletters
      */
-    public function drawNLetters($number=1) {
+    public function drawNLetters(int $number=1) {
         $sletters = array();
         for ($i = 0; $i < $number; $i++) {
             if($slet = $this->draw1Letter()) $sletters[] = $slet;
@@ -98,12 +100,22 @@ class ScrabbleBag {
         return $sletters;
     }
     
-    public function put1Letter($sletter) {
+    /**
+     * Put a letter in the bag
+     * 
+     * @param ScrabbleLetter $sletter The letter to put in the bag
+     */
+    public function put1Letter(ScrabbleLetter $sletter) {
         $this->letters[] = $sletter;
     }
     
-    public function putNLetters($sletters) {
-        foreach ($sletters as $slet) {
+    /**
+     * Put several letters in the bag
+     * 
+     * @param array $letters Array of ScrabbleLetter to put in the bag
+     */
+    public function putNLetters(array $letters) {
+        foreach ($letters as $slet) {
             $this->letters[] = $slet;
         }
     }

@@ -23,46 +23,67 @@
 	?>
 	</div>
 	<div class="turn">
-		<div class="boxtitle">
-			Tirage
-			<div class="toolbar">
-        		<i id="new_turn" class="fas fa-chevron-circle-right fa-fw action" title="New turn"></i>
+		<div id="currentdraw" class="box">
+    		<div class="boxtitle">
+    			Tirage
+    			<div class="toolbar">
+            		<i id="new_turn" class="fas fa-chevron-circle-right fa-fw action" title="New turn"></i>
+            	</div>
+    		</div>
+    		<div class="boxcontent">
+    		<?php 
+        		print $game->getCurrentDrawHTML();
+        	?>
+    		</div>
+		</div>
+		<div id="solutions" class="box">
+    		<div class="boxtitle">
+    			Mots possibles
+    			<div class="toolbar">
+            		<i id="search_solutions" class="fas fa-search fa-fw action" title="Search"></i>
+            	</div>
+    		</div>
+        	<div class="boxcontent">
+        		...
         	</div>
-		</div>
-		<div class="currentdraw">
-		<?php 
-    		print $game->getCurrentDrawHTML();
-    	?>
-		</div>
-		<div class="boxtitle">
-			Mots possibles
-			<div class="toolbar">
-        		<i id="search_solutions" class="fas fa-search fa-fw action" title="Search"></i>
-        	</div>
-		</div>
-    	<div class="solutions">
-    	
     	</div>
 	</div>
 	<div class="game">
-		<div class="boxtitle">
-			Partie en cours
-			<div class="toolbar">
-        		<i id="score" class="fas fa-trophy fa-fw"></i>
+		<div id="score" class="box">
+    		<div class="boxtitle">
+    			Partie en cours
+    			<div class="toolbar">
+            		<i id="score" class="fas fa-trophy fa-fw"></i>
+            	</div>
+    		</div>
+    		<div class="boxcontent">
+    			Score : 000
+    		</div>
+		</div>
+		<div id="gameturns" class="box">
+    		<div class="boxtitle">
+    			Coups joués
+    			<div class="toolbar">
+            		<i id="game_turns" class="fas fa-history fa-fw"></i>
+            	</div>
+    		</div>
+    		<div class="boxcontent">
+        		...
         	</div>
-		</div>
-		<div class="score">
-			Score : 000
-		</div>
-		<div class="boxtitle">
-			Coups joués
-			<div class="toolbar">
-        		<i id="game_turns" class="fas fa-history fa-fw"></i>
-        	</div>
-		</div>
-		<div class="gameturns">
-    	
     	</div>
+	</div>
+	<div class="tools">
+		<div id="checkword" class="box">
+    		<div class="boxtitle">
+    			Vérification d'un mot
+    			<div class="toolbar">
+            		<i id="check_word" class="fas fa-check-circle fa-fw action"></i>
+            	</div>
+    		</div>
+    		<div class="boxcontent">
+    			<input type="text" name="word" />
+    		</div>
+		</div>
 	</div>
 </div>
 

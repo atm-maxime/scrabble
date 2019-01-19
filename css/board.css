@@ -1,3 +1,4 @@
+/* GLOBAL */
 body {
 	font-family: sans-serif;
 	margin: 0px;
@@ -11,11 +12,28 @@ div.top {
 }
 
 div.scrabble {
-	float: left;
+	/* float: left; */
 	padding-top: 5px;
 }
 
-/* TOP ELEMENTS */
+
+/* BOXES AND TOOLS ELEMENTS */
+div.box {
+	margin-bottom: 10px;
+}
+
+div.boxtitle {
+	background-color: #266E49;
+	font-size: 12pt;
+	color: #FFFFFF;
+	padding: 5px;
+}
+
+div.boxcontent {
+	background-color: #D0D0D0;
+	padding: 5px;
+}
+
 div.toolbar {
 	float: right;
 }
@@ -24,6 +42,7 @@ i.action {
 	cursor: pointer;
 }
 
+
 /* BOARD ELEMENTS */
 div.board {
 	float: left;
@@ -31,13 +50,13 @@ div.board {
 	text-align: center;
 }
 
-table.board {
-	/* width: 100%; */
+table.board { float: left; }
+table.board div.letter {
+	width: 18px;
+	height: 18px;
+	font-size: 12pt;
 }
-
-tr.boardline {
-	/* height: 30px; */
-}
+tr.boardline {}
 
 td.idx {
 	width: 5px;
@@ -53,43 +72,16 @@ td.letterbox {
 	height: 32px;
 }
 
-td.normal {
-	background-color: #00CF76;
-}
-
-td.ld {
-	background-color: #2AAFFF;
-}
-
-td.lt {
-	background-color: #5C00FF;
-}
-
-td.wd {
-	background-color: #FF2AE1;
-}
-
-td.wt {
-	background-color: #FF0000;
-}
+td.normal {	background-color: #00CF76;} 
+td.ld {	background-color: #2AAFFF; }
+td.lt {	background-color: #5C00FF; }
+td.wd {	background-color: #FF2AE1; }
+td.wt {	background-color: #FF0000; }
 
 /* TURN ELEMENTS */
 div.turn {
 	float: left;
 	margin: 10px;
-	background-color: #D0D0D0;
-}
-
-div.boxtitle {
-	background-color: #266E49;
-	font-size: 12pt;
-	color: #FFFFFF;
-	padding: 5px;
-}
-
-div.currentdraw {
-	text-align: center;
-	padding: 10px;
 }
 
 div.letter {
@@ -117,19 +109,33 @@ div.wordslist {
 	padding: 10px;
 }
 
+
 /* GAME ELEMENTS */
 div.game {
+	display: none;
 	float: left;
 	margin: 10px;
-	background-color: #D0D0D0;
 }
 
 div.score {
-	display: block;
+	/* display: block; */
 	text-align: center;
 	padding: 10px;
 }
 
 div.gameturns {
 	padding: 10px;
+}
+
+
+/* TOOLS */
+div.tools {
+	display: none;
+	float: left;
+	margin: 10px;
+}
+
+input {
+	margin: 5px;
+	border: 1px solid #000000;
 }

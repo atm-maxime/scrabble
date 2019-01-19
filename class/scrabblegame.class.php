@@ -36,7 +36,6 @@ class ScrabbleGame
      */
     public function __construct($lang='fr') {
         $this->lang = $lang;
-        $this->numberLetterDraw = 3;
         
         // Load dictionnary
         $this->dict = pspell_new($lang);
@@ -44,6 +43,7 @@ class ScrabbleGame
         $this->bag = new ScrabbleBag($lang);
         // Load board
         $this->board = new ScrabbleBoard($lang);
+        $this->numberLetterDraw = ($this->board->boardSize - 1) / 2;
         
         // Game current turn
         $this->currentDraw = array();
@@ -81,9 +81,22 @@ class ScrabbleGame
      * Search for possible words to place on the board
      */
     public function getPossibleWords() {
+        global $test, $TTest;
+        $test = 0; $TTest = array();
         $this->currentWords = array();
-        $this->getSolutions();
+        file_put_contents('games/test.html', '');
+        $this->getSolutions2($this->board, $this->currentDraw);
         $this->getAllCorrectWords();
+        //print_r($TTest);
+        $total = 0;
+        foreach ($TTest as $line => $data) {
+            foreach ($data as $col => $words) {
+                echo '<br>'.$line.' : '.$col.' => '.count($words);
+                $total+=count($words);
+            }
+        }
+        echo '<br>TOT : '.$total;
+        print_r($TTest);
     }
     
     
@@ -99,12 +112,71 @@ class ScrabbleGame
      * Finally calculate the score of each word that has been saved and sort it
      * Priority to horizontal words and the more on the top left possible 
      */
+    public function getSolutions2(&$board, &$letters, $tested=array(), $position='', $direction='h') {
+        global $test, $TTest;
+        $boxes = $board->getBoxesToUse($position, $direction);
+        
+        foreach ($boxes as $pos) { // for each possible box on the board
+            foreach ($letters as $i => $slet) { // for each letter on the current draw
+                // We dont test if test already done
+                list($l, $c) = explode(',', $pos);
+                $tested[$l][$c] = $slet->getText();
+                $tmptested = $tested;
+                ksort($tmptested[$l]);
+                if(isset($TTest[$l][$c]) && in_array(implode('', $tmptested[$l]), $TTest[$l][$c])) {
+                    unset($tested[$l][$c]);
+                    continue;
+                }
+                
+                
+                $test++;
+                $str = '<br>'.$test.' - '.$slet->getText().' sur '.$pos;
+                file_put_contents('games/test.html', $str, FILE_APPEND);
+                
+                unset($letters[$i]); // Remove letter from the current draw
+                //echo '<br>'.$l.','.$c.' - ';
+                //print_r($tested);
+                // First letter put on the board doesn't give direction, 2nd is
+                $d = $this->numberLetterDraw - count($letters);
+                if($d > 1) $direction = $board->getDirection($position, $pos);
+                
+                $board->setLetter($slet, $pos); // Puts letter on the board
+//                 if(empty($tested[]))
+//                 $tested[$]
+//                 $tmptested = $tested;
+//                 $tmptested[$pos] = $slet;
+//                 if(array_diff($tmptested, $array2))
+                //print $this->getBoardHTML();
+                //$words = $this->board->searchWords($pos); // Search for words made with this new letter
+                
+                //$this->currentWords = array_merge($this->currentWords, $words);
+                
+                if(!empty($letters)) {
+                    $this->getSolutions2($board, $letters, $tested, $pos, $direction); // Do it again, recursively
+                }
+                
+//                 print '<br>Solutions => ';
+//                 foreach ($words as $w) {
+//                     print $w->getWordAsText().', ';
+//                 }
+                $board->unsetLetter($pos); // Remove letter from the board
+                $letters[$i] = $slet;  // Letter goes back in the current draw
+                ksort($tested[$l]);
+                $TTest[$l][min(array_keys($tested[$l]))][] = implode('',$tested[$l]);
+                //echo '<br>UNSET '.$l.' , '.$c;
+                unset($tested[$l][$c]);
+            }
+            //flush();
+//             print '<br>Next box...';
+        }
+    }
+    
     public function getSolutions($position='', $direction='') {
         $boxes = $this->board->getBoxesToUse($position, $direction);
         
-//         print '<hr>GET SOLUTIONS FOR LETTERS : '.$this->tmpGetCurrentDrawText().'<hr>';
-//         print 'Boxes found : '.implode(' - ', $boxes);
-//         print '<br>---------------';
+        //         print '<hr>GET SOLUTIONS FOR LETTERS : '.$this->tmpGetCurrentDrawText().'<hr>';
+        //         print 'Boxes found : '.implode(' - ', $boxes);
+        //         print '<br>---------------';
         
         foreach ($boxes as $pos) { // for each possible box on the board
             foreach ($this->currentDraw as $i => $slet) { // for each letter on the current draw
@@ -117,8 +189,8 @@ class ScrabbleGame
                 $this->board->setLetter($slet, $pos); // Puts letter on the board
                 $words = $this->board->searchWords($pos); // Search for words made with this new letter
                 // Marche bien mais ne prend que les mots formé par la lettre $i à la position $pos,
-                // ne prend pas en compte les mots formé par la lettre précédente par exemple... 
-//                 print '<br>PUT '.$slet->getText().' IN '.$pos;
+                // ne prend pas en compte les mots formé par la lettre précédente par exemple...
+                //                 print '<br>PUT '.$slet->getText().' IN '.$pos;
                 
                 $this->currentWords = array_merge($this->currentWords, $words);
                 
@@ -126,15 +198,15 @@ class ScrabbleGame
                     $this->getSolutions($pos, $direction); // Do it again, recursively
                 }
                 
-//                 print '<br>Solutions => ';
-//                 foreach ($words as $w) {
-//                     print $w->getWordAsText().', ';
-//                 }
-                $this->board->unsetLetter($pos); // Remove letter from the board
-                $this->currentDraw[$i] = $slet;  // Letter goes back in the current draw
+                //                 print '<br>Solutions => ';
+                //                 foreach ($words as $w) {
+                //                     print $w->getWordAsText().', ';
+                //                 }
+                    $this->board->unsetLetter($pos); // Remove letter from the board
+                    $this->currentDraw[$i] = $slet;  // Letter goes back in the current draw
             }
             //flush();
-//             print '<br>Next box...';
+            //             print '<br>Next box...';
         }
     }
     
@@ -210,6 +282,8 @@ class ScrabbleGame
      * @return boolean : true if the word is correct, false otherwise 
      */
     public function isWordValid($word) {
+        $this->dict = pspell_new($this->lang);
+        
         // Check the word in the dictionnary
         if(!pspell_check($this->dict, $word)) return false;
         
