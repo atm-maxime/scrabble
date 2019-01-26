@@ -2,6 +2,7 @@
 
 include_once 'class/scrabblebag.class.php';
 include_once 'class/scrabbleboard.class.php';
+include_once 'class/scrabbledict.class.php';
 
 class ScrabbleGame
 {
@@ -10,7 +11,7 @@ class ScrabbleGame
     // Game dictionnary, using PHP pspell library
     private $dict;
     
-    // Letters bag containing ScrabbleLetter
+    // Letters bag containing ScrabbleLetters
     private $bag;
     // Board game
     private $board;
@@ -38,7 +39,7 @@ class ScrabbleGame
         $this->lang = $lang;
         
         // Load dictionnary
-        $this->dict = pspell_new($lang);
+        $this->dict = new ScrabbleDict($lang);
         // Load scrabble bag
         $this->bag = new ScrabbleBag($lang);
         // Load board
@@ -58,7 +59,7 @@ class ScrabbleGame
     /**
      * Launch a new turn to the game
      * 
-     * @param String $rest : Remaining letters from previous turn
+     * @param String $emptyDraw Do we need to empty the deck of letters ?
      */
     public function newTurn($emptyDraw=false) {
         // Turn initialization
@@ -81,22 +82,19 @@ class ScrabbleGame
      * Search for possible words to place on the board
      */
     public function getPossibleWords() {
-        global $test, $TTest;
-        $test = 0; $TTest = array();
         $this->currentWords = array();
-        file_put_contents('games/test.html', '');
         $this->getSolutions2($this->board, $this->currentDraw);
-        $this->getAllCorrectWords();
+        //$this->getAllCorrectWords();
         //print_r($TTest);
-        $total = 0;
-        foreach ($TTest as $line => $data) {
-            foreach ($data as $col => $words) {
-                echo '<br>'.$line.' : '.$col.' => '.count($words);
-                $total+=count($words);
-            }
-        }
-        echo '<br>TOT : '.$total;
-        print_r($TTest);
+//         $total = 0;
+//         foreach ($TTest as $line => $data) {
+//             foreach ($data as $col => $words) {
+//                 echo '<br>'.$line.' : '.$col.' => '.count($words);
+//                 $total+=count($words);
+//             }
+//         }
+//         echo '<br>TOT : '.$total;
+//         print_r($TTest);
     }
     
     
@@ -118,21 +116,6 @@ class ScrabbleGame
         
         foreach ($boxes as $pos) { // for each possible box on the board
             foreach ($letters as $i => $slet) { // for each letter on the current draw
-                // We dont test if test already done
-                list($l, $c) = explode(',', $pos);
-                $tested[$l][$c] = $slet->getText();
-                $tmptested = $tested;
-                ksort($tmptested[$l]);
-                if(isset($TTest[$l][$c]) && in_array(implode('', $tmptested[$l]), $TTest[$l][$c])) {
-                    unset($tested[$l][$c]);
-                    continue;
-                }
-                
-                
-                $test++;
-                $str = '<br>'.$test.' - '.$slet->getText().' sur '.$pos;
-                file_put_contents('games/test.html', $str, FILE_APPEND);
-                
                 unset($letters[$i]); // Remove letter from the current draw
                 //echo '<br>'.$l.','.$c.' - ';
                 //print_r($tested);
@@ -141,33 +124,18 @@ class ScrabbleGame
                 if($d > 1) $direction = $board->getDirection($position, $pos);
                 
                 $board->setLetter($slet, $pos); // Puts letter on the board
-//                 if(empty($tested[]))
-//                 $tested[$]
-//                 $tmptested = $tested;
-//                 $tmptested[$pos] = $slet;
-//                 if(array_diff($tmptested, $array2))
                 //print $this->getBoardHTML();
-                //$words = $this->board->searchWords($pos); // Search for words made with this new letter
+                $words = $this->board->searchWords($pos); // Search for words made with this new letter
                 
-                //$this->currentWords = array_merge($this->currentWords, $words);
+                $this->currentWords = array_merge($this->currentWords, $words);
                 
                 if(!empty($letters)) {
                     $this->getSolutions2($board, $letters, $tested, $pos, $direction); // Do it again, recursively
                 }
                 
-//                 print '<br>Solutions => ';
-//                 foreach ($words as $w) {
-//                     print $w->getWordAsText().', ';
-//                 }
                 $board->unsetLetter($pos); // Remove letter from the board
                 $letters[$i] = $slet;  // Letter goes back in the current draw
-                ksort($tested[$l]);
-                $TTest[$l][min(array_keys($tested[$l]))][] = implode('',$tested[$l]);
-                //echo '<br>UNSET '.$l.' , '.$c;
-                unset($tested[$l][$c]);
             }
-            //flush();
-//             print '<br>Next box...';
         }
     }
     
@@ -370,5 +338,9 @@ class ScrabbleGame
         $turns.= '</table>';
         
         return $turns;
+    }
+    
+    public function getAnchors() {
+        return implode('<br>', $this->board->anchors);
     }
 }

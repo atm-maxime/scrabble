@@ -37,82 +37,48 @@ class ScrabbleBoard
                 $this->boardgame[$l][$c] = '';
             }
         }
+        
+        $this->updateAnchors();
     }
     
     /**
-     * This function must set all tiles where it's possible to put connect with the possible connecting letter
-     * Not finished
-     * 
-     * @param string $idx
+     * Maintain the anchors array with position where letters can be set
      */
-    public function updateAnchors($idx='') {
-        if(empty($idx)) {
-            foreach ($this->boardgame as $l => $line) {
-                foreach ($line as $c => $box) {
-                    // If the box contains an object (a ScrabbleLetter), we search for connected empty boxes
-                    if(is_object($box)) {
-                        $this->updateAnchors("$l,$c");
-                    }
+    public function updateAnchors() {
+        $this->anchors = array();
+        
+        // For each tile on the board, if the tile is empty and next to a ScrabbleLetter, then it's an anchor
+        foreach ($this->boardgame as $l => $line) {
+            foreach ($line as $c => $box) {
+                if(empty($box)) {
+                    if(!empty($this->boardgame[$l-1][$c])) $this->anchors[] = "$l,$c"; // Up
+                    if(!empty($this->boardgame[$l+1][$c])) $this->anchors[] = "$l,$c"; // Down
+                    if(!empty($this->boardgame[$l][$c-1])) $this->anchors[] = "$l,$c"; // Left
+                    if(!empty($this->boardgame[$l][$c+1])) $this->anchors[] = "$l,$c"; // Right
                 }
-            }
-        } else {
-            list($l, $c) = explode(',', $idx);
-            if(is_object($this->boardgame[$l][$c])) {
-                // Search left
-                $y = $c;
-                while(isset($this->boardgame[$l][$y]) && !empty($this->boardgame[$l][$y])) {
-                    $y--;
-                }
-                if(isset($this->boardgame[$l][$y])) $boxes[] = "$l,$y";
-                
-                // Search right
-                $y = $c;
-                while(isset($this->boardgame[$l][$y]) && !empty($this->boardgame[$l][$y])) {
-                    $y++;
-                }
-                if(isset($this->boardgame[$l][$y])) $boxes[] = "$l,$y";
-                
-                // Search up
-                $x = $l;
-                while(isset($this->boardgame[$x][$c]) && !empty($this->boardgame[$x][$c])) {
-                    $x--;
-                }
-                if(isset($this->boardgame[$x][$c])) $boxes[] = "$x,$c";
-                
-                // Search down
-                $x = $l;
-                while(isset($this->boardgame[$x][$c]) && !empty($this->boardgame[$x][$c])) {
-                    $x++;
-                }
-                if(isset($this->boardgame[$x][$c])) $boxes[] = "$x,$c";
             }
         }
-        
+
         if(empty($this->anchors)) {
-            $this->anchors[$this->centralBox] = array();
+            $this->anchors[] = $this->centralBox;
         }
     }
     
-    public function setWord(&$word) {
-        $dir = $this->getDirection($word->getPosition());
-        list($x, $y) = $this->idx2i($word->getPosition());
-        $score = 0;
-        $wd = 0; $wt = 0;
-        for ($i = 0; $i < $word->getWordLength(); $i++) {
-            $tile = $word->getTile($i);
-            $this->setLetter($tile, $this->i2idx($x, $y));
-            $lpoints = $tile->getTileValue();
-            if($this->boxes[$x][$y] == 'ld') $lpoints*=2;
-            if($this->boxes[$x][$y] == 'lt') $lpoints*=3;
-            if($this->boxes[$x][$y] == 'wd') $wd++;
-            if($this->boxes[$x][$y] == 'wt') $wt++;
-            if($dir == 'v') $x++;
-            if($dir == 'h') $y++;
-            $score+=$lpoints;
+    /**
+     * Put a word on the board and recalculate anchors
+     * 
+     * @param ScrabbleWord $sWord Word to put on the board
+     */
+    public function setWord(ScrabbleWord &$sWord) {
+        list($l, $c) = explode(',', $sWord->getIndex());
+        for ($i = 0; $i < $sWord->getWordLength(); $i++) {
+            $sLet = $sWord->getLetter($i);
+            $this->setLetter($sLet, "$l,$c");
+            if($sWord->getDirection() == 'v') $l++;
+            if($sWord->getDirection() == 'h') $c++;
         }
-        $score*=(2*$wd);
-        $score*=(3*$wt);
-        $word->score = $score;
+        
+        $this->updateAnchors();
     }
     
     /**

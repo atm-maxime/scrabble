@@ -10,6 +10,7 @@ $(document).ready(function() {
 			$('div.board').html(data.board);
 			$('#currentdraw div.boxcontent').html(data.currentdraw);
 			$('#solutions div.boxcontent').html('...');
+			$('#score div.boxcontent').html(data.anchors);
 		});
 	});
 	
@@ -29,13 +30,13 @@ $(document).ready(function() {
 	$('#search_solutions').bind('click', function() {
 		$.ajax({
 			url: 'interface.php',
-			//dataType: 'json',
+			dataType: 'json',
 			data: {
 				'action': 'list_solutions'
 			}
 		}).done(function(data) {
 			//alert(data);
-			$('#solutions div.boxcontent').html(data);
+			$('#solutions div.boxcontent').html(data.solutions);
 			
 			$('i.word').bind('click', function() {
 				$.ajax({
@@ -48,6 +49,7 @@ $(document).ready(function() {
 				}).done(function(data) {
 					$('div.board').html(data.board);
 					$('#currentdraw div.boxcontent').html(data.currentdraw);
+					$('#score div.boxcontent').html(data.anchors);
 				});
 			});
 		});

@@ -112,7 +112,7 @@ div.wordslist {
 
 /* GAME ELEMENTS */
 div.game {
-	display: none;
+	/* display: none; */
 	float: left;
 	margin: 10px;
 }

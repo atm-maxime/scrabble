@@ -4,10 +4,15 @@
  * Class to manage a scrabble word
  */
 class ScrabbleWord {
+    // Array containing the ScrabbleLetters forming the word
     private $letters;
+    // Index where the word begins
     private $index;
+    // Direction of the word (h or v)
     private $direction;
+    // Alphanumeric position of the word (i.e. H3)
     private $position;
+    // Score of the word in the game
     private $points;
     
     public function __construct($idx, $dir, $pos) {
