@@ -1,0 +1,11 @@
+UI
+ - Vertical align on titles
+ - Width of the "game" column (3rd) to fill the screen
+
+ALGO
+ - Search all letter combination possible ON THE BOARD -- In progress
+ - Function to calculate a word score
+ - Mode "auto" qui fait un tirage, prend et place le top, enregistre l'historique du jeu + score jusqu'à fin de partie
+
+LANG
+ - Use lang files to deal with translations
