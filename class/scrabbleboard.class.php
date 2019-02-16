@@ -5,7 +5,7 @@ include 'class/scrabbleword.class.php';
 class ScrabbleBoard
 {
     private $boxes;
-    private $boardgame;
+    public $boardgame;
     
     public $boardSize;
     
@@ -14,15 +14,17 @@ class ScrabbleBoard
     // Number of columns on the board
     private $colNumber;
     // Central box of the board
-    private $centralBox;
+    public static $centralBox;
     // Anchors
     public $anchors;
+    // Cross-checks
+    public $crossCheck;
     
     public function __construct($lang) {
         $this->boardSize = 7;
         $this->lineNumber = $this->boardSize;
         $this->colNumber = $this->boardSize;
-        $this->centralBox = (($this->boardSize - 1)/2).','.(($this->boardSize - 1)/2);    
+        self::$centralBox = (($this->boardSize - 1)/2).','.(($this->boardSize - 1)/2);    
         
         $conf = file('conf/'.$lang.'.board.conf');
         foreach ($conf as $line) {
@@ -33,8 +35,10 @@ class ScrabbleBoard
         $this->boardgame = array();
         for ($l = 0; $l < $this->lineNumber; $l++) {
             $this->boardgame[$l] = array();
+            $this->crossCheck[$l] = array();
             for ($c = 0; $c < $this->colNumber; $c++) {
                 $this->boardgame[$l][$c] = '';
+                $this->crossCheck[$l][$c]['h'] = array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z');
             }
         }
         
@@ -60,7 +64,7 @@ class ScrabbleBoard
         }
 
         if(empty($this->anchors)) {
-            $this->anchors[] = $this->centralBox;
+            $this->anchors[] = self::$centralBox;
         }
     }
     

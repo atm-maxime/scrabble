@@ -1,20 +1,22 @@
 <?php
 
+ini_set('memory_limit', '500M');
 include_once 'class/scrabblebag.class.php';
 include_once 'class/scrabbleboard.class.php';
 include_once 'class/scrabbledict.class.php';
+include_once 'class/scrabblesolver.class.php';
 
 class ScrabbleGame
 {
     // Game lang, used to load setup and dictionnary
     private $lang;
     // Game dictionnary, using PHP pspell library
-    private $dict;
+    public $dict;
     
     // Letters bag containing ScrabbleLetters
     private $bag;
     // Board game
-    private $board;
+    public $board;
     // Game turns
     private $gameTurns;
     // Game score
@@ -82,8 +84,11 @@ class ScrabbleGame
      * Search for possible words to place on the board
      */
     public function getPossibleWords() {
+        $solver = new ScrabbleSolver();
+        $solver->searchWords($this->dict, $this->board, $this->currentDraw);
+        
         $this->currentWords = array();
-        $this->getSolutions2($this->board, $this->currentDraw);
+        //$this->getSolutions2($this->board, $this->currentDraw);
         //$this->getAllCorrectWords();
         //print_r($TTest);
 //         $total = 0;
